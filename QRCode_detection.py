@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb 16 09:18:13 2023
-Description: 对输入的图片进行预处理，提取出图片中的二维码
+Description: 对输入的图片进行预处理，提取出图片中的二维码，并裁剪得到二维码区域，然后旋转至正确方向
 """
 import os
 import cv2
@@ -22,7 +22,8 @@ def cv_imshow(img_array, img_name="Image"):
 
 
 def os_makedirs(path):
-    # 不存在则创建文件夹
+    """ 不存在则创建文件夹
+    """
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -104,7 +105,6 @@ def QRCode_detection(img_array):
 
 
 if __name__ == "__main__":
-    # TODO: 翻转至统一角度
     root_path = r"E:\Dataset\QRCodeDataset\all"
 
     all_png_path = r"E:\Dataset\QRCodeDataset\all_png"
@@ -115,7 +115,6 @@ if __name__ == "__main__":
     # 扫描文件夹
     folder_list = os.listdir(root_path)
     for folder_i in folder_list:
-        # %%
         print("\n--Tag:", folder_i)
         img_list = os.listdir(opj(root_path, folder_i))
 
@@ -132,7 +131,7 @@ if __name__ == "__main__":
                 print("Warning: there are no QRCode in the image:", opj(root_path, folder_i, img_i))
                 continue
             else:  # 存在二维码
-                # 保存原图像，统一为 png 格式并保存至新的文件夹
+                # 由于拍摄的图像格式不一，所以读取图片后将图片统一为 png 格式并保存至新的文件夹
                 i += 1
                 new_folder_i = opj(all_png_path, folder_i)
                 os_makedirs(new_folder_i)
@@ -145,9 +144,3 @@ if __name__ == "__main__":
                 os_makedirs(qrcode_folder_i)
                 if not os.path.exists(opj(qrcode_folder_i, new_img_i)):
                     cv2.imwrite(opj(qrcode_folder_i, new_img_i), img_qrcode)
-
-
-
-            # cv_imshow(img_rect)
-            # cv_imshow(img_warped, "w")
-            # cv_imshow(img_rotate, "c")
