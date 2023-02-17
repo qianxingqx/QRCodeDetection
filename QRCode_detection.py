@@ -15,7 +15,7 @@ from pyzbar.pyzbar import decode
 def cv_imshow(img_array, img_name="Image"):
     """ CV 绘图显示
     """
-    cv2.namedWindow(img_name, 0)  # 代表窗口可伸缩，否则 imshow 会显示不全
+    cv2.namedWindow(img_name, 0)  # 代表窗口可伸缩，否则 imshow 可能会显示不全
     cv2.imshow(img_name, img_array)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
