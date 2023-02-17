@@ -2,6 +2,8 @@
 """
 Created on Thu Feb 16 09:18:13 2023
 Description: 对输入的图片进行预处理，提取出图片中的二维码，并裁剪得到二维码区域，然后旋转至正确方向
+Notes:
+    1. 由于采集的数据集有 HEIC 和 PNG 格式，所以该程序还用于将所有图片统一至 png 格式并保存
 """
 import os
 import cv2
@@ -28,18 +30,21 @@ def os_makedirs(path):
         os.makedirs(path)
 
 
-def QRCode_detection(img_array):
+def QRCode_detection(img_array, edge_pixels=5):
     """ 检测图片中的二维码，只允许检测单个
     Args:
-        img_array
+        img_array: nd.array
+        edge_pixels: 保留的边缘像素点个数
     Returns:
-        img_rect, img_warped, img_cropped
+        img_rect: 在原图基础上用线段标记了二维码位置的图片
+        img_warped: 裁剪出的原始二维码图片
+        img_rotate: 将二维码旋转至统一的方向的图片
     """
     # 转换为灰度图像
     gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
 
     # 找到图像中的所有二维码
-    # 可改为：test=pyzbar.decode(frame,ymbols=[pyzbar.ZBarSymbol.QRCODE])
+    # 可改为：test=pyzbar.decode(frame, ymbols=[pyzbar.ZBarSymbol.QRCODE])
     decoded_objs = decode(gray)
 
     # 如果至少找到了一个二维码，就对其进行处理
@@ -58,12 +63,25 @@ def QRCode_detection(img_array):
         points = points.reshape((-1, 1, 2))
 
         # 提取二维码的区域
+        # edge_pixels = 10
+        # 行
+        points[0][0][0] -= edge_pixels
+        points[3][0][0] -= edge_pixels
+        points[1][0][0] += edge_pixels
+        points[2][0][0] += edge_pixels
+        # 列
+        points[2][0][1] -= edge_pixels
+        points[3][0][1] -= edge_pixels
+        points[0][0][1] += edge_pixels
+        points[1][0][1] += edge_pixels
+
         width = rect[2]
         height = rect[3]
         src_pts = np.float32([points[0][0], points[1][0], points[2][0], points[3][0]])
         dst_pts = np.float32([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]])
         M = cv2.getPerspectiveTransform(src_pts, dst_pts)
         img_warped = cv2.warpPerspective(img_array, M, (width, height))
+        # cv_imshow(img_warped)
 
         # 将二维码位置标记在原图上
         img_rect = img_array.copy()
@@ -74,7 +92,7 @@ def QRCode_detection(img_array):
         cv2.line(img_rect, (int(src_pts[2][0]), int(src_pts[2][1])), (int(src_pts[3][0]), int(src_pts[3][1])), color=line_color, thickness=line_thickness)
         cv2.line(img_rect, (int(src_pts[3][0]), int(src_pts[3][1])), (int(src_pts[0][0]), int(src_pts[0][1])), color=line_color, thickness=line_thickness)
 
-        # 将二维码统一旋转至 UP 方向
+        # 将二维码统一旋转至 DOWN 方向
         # LEFT |-, DOWN |_, RIGHT _|, UP -|
         img_warped_gray = cv2.cvtColor(img_warped, cv2.COLOR_BGR2GRAY)
         img_warped_decoded_objs = decode(img_warped_gray)
@@ -115,7 +133,7 @@ if __name__ == "__main__":
     # 扫描文件夹
     folder_list = os.listdir(root_path)
     for folder_i in folder_list:
-        print("\n--Tag:", folder_i)
+        print("\n--Label:", folder_i)
         img_list = os.listdir(opj(root_path, folder_i))
 
         # 遍历文件夹内所有图片
