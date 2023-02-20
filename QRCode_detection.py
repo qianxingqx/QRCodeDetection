@@ -63,25 +63,18 @@ def QRCode_detection(img_array, edge_pixels=5):
         points = points.reshape((-1, 1, 2))
 
         # 提取二维码的区域
-        # edge_pixels = 10
-        # 行
-        points[0][0][0] -= edge_pixels
-        points[3][0][0] -= edge_pixels
-        points[1][0][0] += edge_pixels
-        points[2][0][0] += edge_pixels
-        # 列
-        points[2][0][1] -= edge_pixels
-        points[3][0][1] -= edge_pixels
-        points[0][0][1] += edge_pixels
-        points[1][0][1] += edge_pixels
+        width = int(rect[2] * 1.5)
+        height = int(rect[3] * 1.5)
 
-        width = rect[2]
-        height = rect[3]
         src_pts = np.float32([points[0][0], points[1][0], points[2][0], points[3][0]])
-        dst_pts = np.float32([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]])
+        # dst_pts = np.float32([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]])
+        dst_pts = np.float32([[width - 1, height - 1], [width - 1, 0], [0, 0], [0, height - 1]])
+
         M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-        img_warped = cv2.warpPerspective(img_array, M, (width, height))
-        # cv_imshow(img_warped)
+        # 将裁剪中心向左上角偏移，然后扩大 width 和 height 大小
+        M[0, 2] += edge_pixels
+        M[1, 2] += edge_pixels
+        img_warped = cv2.warpPerspective(img_array, M, (width+edge_pixels*2, height+edge_pixels*2))
 
         # 将二维码位置标记在原图上
         img_rect = img_array.copy()
@@ -101,20 +94,27 @@ def QRCode_detection(img_array, edge_pixels=5):
             return None, None, None
         img_warped_obj = img_warped_decoded_objs[0]
         # print(img_warped_obj.orientation)
-        if img_warped_obj.orientation == "LEFT":
+        if img_warped_obj.orientation == "UP":
             img_rotate = np.rot90(img_warped, k=-3)  # 顺时针旋转 270
-        elif img_warped_obj.orientation == "UP":
-            img_rotate = np.rot90(img_warped, k=-2)  # 顺时针旋转 180
         elif img_warped_obj.orientation == "RIGHT":
+            img_rotate = np.rot90(img_warped, k=-2)  # 顺时针旋转 180
+        elif img_warped_obj.orientation == "DOWN":
             img_rotate = np.rot90(img_warped, k=-1)  # 顺时针旋转 90
         else:
             img_rotate = img_warped.copy()
+        # cv_imshow(img_array)
+        # cv_imshow(img_warped, 'w')
+        # cv_imshow(img_rotate, 'r')
 
         # # 将二维码裁剪成正方形
         # if width > height:
-        #     img_cropped = img_rotate[:, (width-height)//2:(width+height)//2]
+        #     margin = int((width - height) * 0.2)  # 扩展20%的边缘
+        #     img_cropped = img_rotate[:, (width-height)//2-margin:(width+height)//2+margin]
         # else:
-        #     img_cropped = img_rotate[(height-width)//2:(height+width)//2, :]
+        #     margin = int((height - width) * 0.2)  # 扩展20%的边缘
+        #     img_cropped = img_rotate[(height-width)//2-margin:(height+width)//2+margin, :]
+        # cv_imshow(img_rotate, "w")
+        # cv_imshow(img_cropped, "c")
 
         return img_rect, img_warped, img_rotate
     else:

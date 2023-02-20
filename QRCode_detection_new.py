@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Feb 17 11:22:04 2023
-
-@author: du
+Description: 直接读取数据集，提取二维码区域
 """
 import os
 import cv2
@@ -15,7 +14,7 @@ from QRCode_detection import os_makedirs, cv_imshow, QRCode_detection
 
 if __name__ == "__main__":
     root_path = r"E:\Dataset\QRCodeDataset\original_selected_image"
-    edge_pixels = 0  # 保留的边缘像素点个数
+    edge_pixels = 15  # 保留的边缘像素点个数
 
     # 裁剪二维码保存的位置
     all_qrcode_edge_path = r"E:\Dataset\QRCodeDataset\qrcode_edge_image"
@@ -46,5 +45,5 @@ if __name__ == "__main__":
                 # 保存裁剪旋转调整方向后的二维码图片
                 qrcode_folder_i = opj(all_qrcode_edge_path, folder_i)
                 os_makedirs(qrcode_folder_i)
-                if not os.path.exists(opj(qrcode_folder_i, img_i)):
-                    cv2.imwrite(opj(qrcode_folder_i, img_i), img_qrcode)
+                # if not os.path.exists(opj(qrcode_folder_i, img_i)):
+                cv2.imwrite(opj(qrcode_folder_i, img_i), img_qrcode)
